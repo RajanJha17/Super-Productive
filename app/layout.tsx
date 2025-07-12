@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/providers/ThemeProvider";
 
@@ -16,10 +15,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body
         className={` antialiased`}
       >
+<<<<<<< Updated upstream
         <ThemeProvider
                         attribute="class"
                         defaultTheme="system"
@@ -28,6 +28,20 @@ export default function RootLayout({
         >
           {children}
         </ThemeProvider>
+=======
+<<<<<<< Updated upstream
+        {children}
+=======
+        <ThemeProvider
+                          attribute="class"
+                          defaultTheme="system"
+                          enableSystem
+                          disableTransitionOnChange
+        >
+          {children}
+        </ThemeProvider>
+>>>>>>> Stashed changes
+>>>>>>> Stashed changes
       </body>
     </html>
   );

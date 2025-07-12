@@ -1,17 +1,9 @@
-<<<<<<< Updated upstream
-=======
-<<<<<<< Updated upstream
-import Image from "next/image";
->>>>>>> Stashed changes
-
 import { ThemeSwitcher } from "@/components/switchers/ThemeSwitcher";
-
 const AuthLayout = ({ children }: { children: React.ReactNode }) => {
   return (
     <main className="flex flex-col gap-3 justify-center items-center min-h-screen w-full p-4 md:p-6">
       <div className="absolute top-0 left-0 w-full flex justify-end">
         <div className="flex items-center gap-2 max-w-7xl p-4 md:p-6">
-          
           <ThemeSwitcher
             alignHover="end"
             alignDropdown="end"
@@ -23,21 +15,6 @@ const AuthLayout = ({ children }: { children: React.ReactNode }) => {
       {children}
     </main>
   );
-<<<<<<< Updated upstream
 };
 
 export default AuthLayout;
-=======
-}
-=======
-import React from 'react'
-
-const page = () => {
-  return (
-    <div>page</div>
-  )
-}
-
-export default page
->>>>>>> Stashed changes
->>>>>>> Stashed changes

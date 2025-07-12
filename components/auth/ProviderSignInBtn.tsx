@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { Button } from "../ui/button";
 
 import { signIn } from "next-auth/react";
+import { useProviderLoginError } from "@/hooks/useProviderLoginError";
 
 interface Props extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   children: React.ReactNode;
@@ -18,7 +19,8 @@ export const ProviderSignInBtn = ({
 }: Props) => {
   const [showLoggedInfo, setShowLoggedInfo] = useState(false);
 
-  
+  useProviderLoginError(showLoggedInfo);
+
 
   const signInHandler = async () => {
     onLoading(true);

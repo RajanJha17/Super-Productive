@@ -47,13 +47,16 @@ model User {
   name          String?
   username      String @unique
   email         String?   @unique
-    surname       String?
+  surname       String?
   emailVerified DateTime?
   hashedPassword String?
   image         String?
   completedOnboarding Boolean @default(false)
   accounts      Account[]
   sessions      Session[]
+  createdWorkspaces Workspace[] @relation("CreatedBy")
+  subscriptions Subscription[]
+  useCase UseCase?
  
 }
  
@@ -62,4 +65,50 @@ model VerificationToken {
   token      String @unique
   expires    DateTime
 
+}
+
+enum UserPermission {
+  ADMIN
+  CAN_EDIT
+  READ_ONLY
+  OWNER
+}
+
+enum UseCase {
+  WORK
+  STUDY
+  PERSONAL_USE
+}
+
+enum NotifyType {
+  NEW_USER_IN_WORKSPACE
+  USER_LEFT_WORKSPACE
+  NEW_TASK
+  NEW_MIND_MAP
+  NEW_ROLE
+  NEW_ASSIGNMENT_TASK
+  NEW_ASSIGNMENT_MIND_MAP
+}
+
+model Workspace {
+  id String @id @default(cuid())
+  name String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  creatorId String?
+  Creator User? @relation("CreatedBy",fields: [creatorId],references: [id],onDelete: Cascade)
+  image String?
+  subscribers Subscription[]
+
+  @@index([creatorId])
+}
+
+model Subscription {
+  user User @relation(fields: [userId],references: [id],onDelete: Cascade)
+  userId String
+  workspace Workspace @relation(fields: [workspaceId],references: [id],onDelete: Cascade)
+  workspaceId String
+  userRole UserPermission @default(READ_ONLY)
+
+  @@id([userId,workspaceId])
 }

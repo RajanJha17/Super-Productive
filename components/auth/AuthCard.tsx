@@ -39,8 +39,8 @@ const AuthCard = ({ signInCard }: Props) => {
           href={signInCard ? "/sign-up" : "/sign-in"}
         >
           {signInCard
-            ? "Sign up"
-            : "Sign in" }
+            ? " Sign up"
+            : " Sign in" }
         </Link>
       </p>
     </>

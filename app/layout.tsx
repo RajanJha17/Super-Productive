@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { ThemeProvider } from "@/providers/ThemeProvider";
 import { Toaster } from "@/components/ui/sonner";
+import { AuthProvider } from "@/providers/AuthProvider";
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -16,7 +17,8 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={` antialiased`}>
-        <ThemeProvider
+       <AuthProvider>
+       <ThemeProvider
           attribute="class"
           defaultTheme="system"
           enableSystem
@@ -25,6 +27,7 @@ export default function RootLayout({
           <Toaster />
           {children}
         </ThemeProvider>
+       </AuthProvider>
       </body>
     </html>
   );

@@ -3,6 +3,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/providers/ThemeProvider";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/providers/AuthProvider";
+import QueryProvider from "@/providers/QueryProvider";
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -18,6 +19,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={` antialiased`}>
        <AuthProvider>
+       <QueryProvider>
        <ThemeProvider
           attribute="class"
           defaultTheme="system"
@@ -27,6 +29,7 @@ export default function RootLayout({
           <Toaster />
           {children}
         </ThemeProvider>
+       </QueryProvider>
        </AuthProvider>
       </body>
     </html>

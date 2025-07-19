@@ -7,15 +7,23 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import React, { useMemo, useRef, useState } from "react";
-import { Camera, User } from "lucide-react";
+import { Camera, Check, Trash, User } from "lucide-react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { UserAvatar } from "@/components/ui/user-avatar";
+import { User as UserType } from "@prisma/client";
 import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { imageSchema, ImageShema } from "@/schema/imageSchema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "@/components/ui/input";
+import { useMutation } from "@tanstack/react-query";
+import axios from "axios";
+import { toast } from "sonner";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { LoadingState } from "@/components/ui/loadingState";
+import { useUploadThing } from "@/lib/uploadthing";
 
 interface Props {
   profileImage?: string | null;
@@ -26,58 +34,103 @@ const AddUserImage = ({ profileImage, className }: Props) => {
   const [open, setOpen] = useState(false);
   const [imagePreview, setImagePreview] = useState("");
   const inputRef = useRef<null | HTMLInputElement>(null);
-
+  const { update } = useSession();
+  const router = useRouter();
   const form = useForm<ImageShema>({
     resolver: zodResolver(imageSchema),
   });
 
-  const onImageChange=(e:React.ChangeEvent<HTMLInputElement>)=>{
-    if(e.target.files && e.target.files[0]){
-      const selectedFile=e.target.files[0];
-      const result=imageSchema.safeParse({image:selectedFile})
+  const { mutate: deleteProfileImage, isPending: isDeleting } = useMutation({
+    mutationFn: async () => {
+      const { data } = await axios.post("/api/profile/delete_profile_image");
+      return data as UserType;
+    },
+    onError: (err) => {
+      toast.error("Failed to update your profile image. Please try again");
+    },
+    onSuccess: async () => {
+      toast.success("Your profile image has been updated!");
+      await update();
+      router.refresh();
+    },
+    mutationKey: ["deleteProfileImage"],
+  });
 
-      if(result.success){
+  const {startUpload,isUploading}=useUploadThing("imageUploader",{
+    onUploadError:(error)=>{
+      toast.error("Failed to upload image")
+    },
+    onClientUploadComplete:(data)=>{
+      if(data) uploadProfileImage(data[0].url);
+      else{
+        toast.success("Image uploaded ")
+      }
+    }
+  })
+
+  const { mutate: uploadProfileImage, isPending } = useMutation({
+    mutationFn: async (profileImage:string) => {
+      const { data } = await axios.post("/api/profile/profileImage",{profileImage});
+      return data as UserType;
+    },
+    onError: (err) => {
+      toast.error("Failed to update your profile image. Please try again");
+    },
+    onSuccess: async () => {
+      toast.success("Your profile image has been updated!");
+      setOpen(false)
+      await update();
+      router.refresh();
+    },
+    mutationKey: ["uploadProfileImage"],
+  });
+
+  const onImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const selectedFile = e.target.files[0];
+      const result = imageSchema.safeParse({ image: selectedFile });
+
+      if (result.success) {
         form.clearErrors("image");
-        form.setValue("image",selectedFile)
-        setImagePreview(URL.createObjectURL(e.target.files[0]))
-      }else{
-        const errors=result.error.flatten().fieldErrors.image;
-        errors?.forEach((error)=>{
-          form.setError("image",{message:error})
-        })
-      }
-
-    }
-
-  }
-
-  const imageOptions=useMemo(()=>{
-    if(!imagePreview && profileImage){
-      return{
-        canDelete:true,
-        canSave:false
-      }
-    }else if(imagePreview && profileImage){
-      return{
-        canDelete:false,
-        canSave:true
-      } 
-    }else if(imagePreview && !profileImage){
-      return {
-        canDelete:false,
-        canSave:true
-      }
-        
-    }else {
-      return {
-        canDelete:false,
-        canSave:false
+        form.setValue("image", selectedFile);
+        setImagePreview(URL.createObjectURL(e.target.files[0]));
+      } else {
+        const errors = result.error.flatten().fieldErrors.image;
+        errors?.forEach((error) => {
+          form.setError("image", { message: error });
+        });
       }
     }
+  };
 
-  },[imagePreview,profileImage])
+  const imageOptions = useMemo(() => {
+    if (!imagePreview && profileImage) {
+      return {
+        canDelete: true,
+        canSave: false,
+      };
+    } else if (imagePreview && profileImage) {
+      return {
+        canDelete: false,
+        canSave: true,
+      };
+    } else if (imagePreview && !profileImage) {
+      return {
+        canDelete: false,
+        canSave: true,
+      };
+    } else {
+      return {
+        canDelete: false,
+        canSave: false,
+      };
+    }
+  }, [imagePreview, profileImage]);
 
-  const onSubmit = () => {};
+  const onSubmit = async(data:ImageShema) => {
+    const image:File=data.image;
+    await startUpload([image]);
+  };
 
   return (
     <div className="w-full flex flex-col justify-center items-center gap-2">
@@ -161,10 +214,37 @@ const AddUserImage = ({ profileImage, className }: Props) => {
                 )}
               ></FormField>
               <div className="flex mt-5 w-full justify-center items-center gap-4">
-                <Button  type="button">
-
+                <Button
+                  type="button"
+                  disabled={!imageOptions.canDelete}
+                  variant={imageOptions.canDelete ? "default" : "secondary"}
+                  className={`rounded-full w-12 h-12 p-2 ${
+                    imageOptions.canDelete
+                      ? "text-white"
+                      : "text-muted-foreground"
+                  }`}
+                  onClick={()=>deleteProfileImage()}
+                >
+                  {isDeleting ? <LoadingState /> : <Trash size={18} />}
                 </Button>
 
+                <Button
+                  type="submit"
+                  disabled={!imageOptions.canSave || isUploading || isPending}
+                  variant={imageOptions.canSave ? "default" : "secondary"}
+                  className={`rounded-full w-12 h-12 p-2 ${
+                    imageOptions.canDelete
+                      ? "text-white"
+                      : "text-muted-foreground"
+                  }`}
+                  
+                >
+                  {isPending || isUploading ? (
+                    <LoadingState />
+                  ):(
+                    <Check size={18} />
+                  )}
+                </Button>
               </div>
             </form>
           </Form>
